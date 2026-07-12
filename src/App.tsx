@@ -308,15 +308,15 @@ export default function App() {
   const [showLevelUpModal, setShowLevelUpModal] = useState(false);
   const [levelUpMessage, setLevelUpMessage] = useState("");
 
+  // お着替えシステムの状態
+  const [equippedCostume, setEquippedCostume] = useState<string>("default");
+  const [showCloset, setShowCloset] = useState(false);
+
   // ステッカー報酬システム用状態
   const [selectedSticker, setSelectedSticker] = useState<number | null>(null);
   const [showStickerModal, setShowStickerModal] = useState(false);
   const [newlyUnlockedSticker, setNewlyUnlockedSticker] = useState<number | null>(null);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
-
-  // お着替えシステムの状態
-  const [equippedCostume, setEquippedCostume] = useState<string>("default");
-  const [showCloset, setShowCloset] = useState(false);
 
   // Local storage lists
   const [history, setHistory] = useState<Quote[]>([]);
@@ -489,6 +489,37 @@ export default function App() {
     setTimeout(() => setShowToast(false), 2500);
   };
 
+  // 衣装をお着替えする処理
+  const equipCostume = (id: string) => {
+    setEquippedCostume(id);
+    localStorage.setItem("hiro_equipped_costume", id);
+
+    const costume = costumeList.find(c => c.id === id);
+    if (costume) {
+      setDialogue(`「お着替えしたワン！${costume.name}、似合ってるかな？🐾」`);
+      triggerToast(`👕 ${costume.name} に着替えたワン！`);
+    }
+  };
+
+  // アプリの全データを初期状態にリセットする処理
+  const resetAllData = () => {
+    if (window.confirm("アプリの全てのデータ（なでなで回数、おみくじ履歴、ステッカー、お気に入りなど）を初期状態にリセットしますか？🐾")) {
+      localStorage.clear();
+      setPetCount(0);
+      setHistory([]);
+      setFavorites([]);
+      setFortuneHistory([]);
+      setTodayFortune(null);
+      setEquippedCostume("default");
+      setSelectedSticker(null);
+      setDialogue(defaultDialogues[0]);
+      triggerToast("🧹 アプリのデータを完全に初期状態にリセットしましたワン！");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
+  };
+
   // Copy or Share function
   const copyAndShare = async () => {
     const textToCopy = currentQuote 
@@ -519,19 +550,6 @@ export default function App() {
     if (!currentQuote) return "";
     const text = `【ヒロの名言ガチャ】\n今の私への言葉：\n${currentQuote.text}\n#ヒロの名言ガチャ\n`;
     return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
-  };
-
-  // 衣装をお着替えする処理
-  const equipCostume = (id: string) => {
-    setEquippedCostume(id);
-    setShowCloset(false);
-    localStorage.setItem("hiro_equipped_costume", id);
-
-    const costume = costumeList.find(c => c.id === id);
-    if (costume) {
-      setDialogue(`「お着替えしたワン！${costume.name}、似合ってるかな？🐾」`);
-      triggerToast(`👕 ${costume.name} に着替えたワン！`);
-    }
   };
 
   // Interaction when clicking Hiro
@@ -845,7 +863,7 @@ export default function App() {
     }
   };
 
-  // Determine current image to display
+  // Determine current image to display based on bond level
   const getHiroImage = () => {
     if (isDrawing) {
       // During drawing, show default or change dynamically to show thinking
@@ -960,14 +978,10 @@ export default function App() {
                         const isEquipped = equippedCostume === costume.id;
 
                         return (
-                          <button
-                            type="button"
+                          <div
                             key={costume.id}
-                            aria-label={`衣装「${costume.name}」`}
-                            aria-pressed={isEquipped}
-                            disabled={!isUnlocked}
                             onClick={() => isUnlocked && equipCostume(costume.id)}
-                            className={`appearance-none w-full p-2 rounded-xl border text-center flex flex-col items-center justify-between relative cursor-pointer select-none transition-all ${
+                            className={`p-2 rounded-xl border text-center flex flex-col items-center justify-between relative cursor-pointer select-none transition-all ${
                               isEquipped
                                 ? "bg-amber-100/50 border-amber-400 shadow-xs scale-102"
                                 : isUnlocked
@@ -1002,13 +1016,13 @@ export default function App() {
                                   {isEquipped ? "着用中" : "着替える"}
                                 </p>
                               ) : (
-                                <p className="text-[8px] font-bold text-neutral-400 flex items-center justify-center gap-0.5">
+                                <p className="text-[8px] font-bold text-[#a39485] flex items-center justify-center gap-0.5">
                                   <span>🔒</span>
                                   <span>Lv.{costume.requiredLevel}</span>
                                 </p>
                               )}
                             </div>
-                          </button>
+                          </div>
                         );
                       })}
                     </div>
@@ -1721,7 +1735,7 @@ export default function App() {
                       <div className="text-[10px] text-[#a39485] font-black">本日の運勢ランク</div>
                       <div className="flex items-center gap-2">
                         <span className="text-3xl">{todayFortune.emoji}</span>
-                        <span className={`text-3xl md:text-4xl font-black tracking-wider px-4 py-1 rounded-2xl shadow-sm text-white ${
+                        <span className={`text-3xl md:text-4xl font-black tracking-wider px-4 py-1 rounded-2xl shadow-sm ${
                           todayFortune.luck === "超大吉" ? "bg-gradient-to-r from-red-500 via-pink-500 to-rose-500 text-transparent bg-clip-text animate-pulse font-extrabold border-2 border-rose-300" :
                           todayFortune.luck === "大吉" ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white" :
                           todayFortune.luck === "中吉" ? "bg-gradient-to-r from-emerald-400 to-teal-500 text-white" :
@@ -1785,6 +1799,46 @@ export default function App() {
                   </div>
                 </motion.div>
               )}
+
+              {/* 全ての運勢一覧セクション (いつでもすべての運勢が見える状態) */}
+              <div className="bg-[#fdfbf7] border-2 border-[#ede7dc]/60 rounded-2xl p-4 space-y-3 shadow-3xs text-left">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-[#4a3728] flex items-center gap-1.5">
+                    <span>🔮</span>
+                    <span>ヒロのおみくじ運勢ランク一覧（全６種類）</span>
+                  </h4>
+                  <span className="text-[9px] text-[#a39485] font-bold">いつでも確認できるワン🐾</span>
+                </div>
+                
+                <p className="text-[10px] text-[#8c7a69] font-medium leading-relaxed">
+                  ヒロの運勢おみくじに登場する、すべての運勢ランクと代表的なお告げワン！今日はどれが当たるかワクワクするワン♪
+                </p>
+
+                <div className="grid grid-cols-1 gap-2 max-h-[220px] overflow-y-auto pr-1">
+                  {[
+                    { luck: "超大吉", emoji: "👑✨", color: "bg-gradient-to-r from-red-500 via-pink-500 to-rose-500 text-white font-extrabold", desc: "最高の奇跡が起きる無敵の一日！ヒロが全力でハッピーな風を送るワン！" },
+                    { luck: "大吉", emoji: "🌟🐾", color: "bg-gradient-to-r from-amber-400 to-orange-500 text-white", desc: "笑顔がみんなを幸せにするワン！新しいことに挑戦すると大成功！" },
+                    { luck: "中吉", emoji: "🌈🐕", color: "bg-gradient-to-r from-emerald-400 to-teal-500 text-white", desc: "一歩ずつ確実に進めているワン。焦らず、のんびりいこう🍀" },
+                    { luck: "吉", emoji: "🍙🍀", color: "bg-gradient-to-r from-blue-400 to-indigo-500 text-white", desc: "いつもの日常こそが極上の宝物ワン！自分をたくさん褒めてあげてね。" },
+                    { luck: "小吉", emoji: "🌸🎵", color: "bg-gradient-to-r from-purple-400 to-pink-500 text-white", desc: "小さな可愛い幸せが見つかる予感♪ 身の回りを少し整えてみてね。" },
+                    { luck: "末吉", emoji: "💤🌙", color: "bg-gradient-to-r from-neutral-400 to-gray-500 text-white", desc: "今はたっぷり休んでパワーを溜める時間ワン。ボクが寄り添うから暖かくして寝よう💤" }
+                  ].map((f, i) => (
+                    <div key={i} className="flex items-start gap-2.5 p-2 rounded-xl bg-white border border-[#f0ebe4] text-xs font-bold shadow-4xs transition-all hover:border-amber-200">
+                      <div className="flex flex-col items-center justify-center min-w-[65px] gap-1">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full text-center tracking-wider scale-95 shadow-4xs ${f.color}`}>
+                          {f.luck}
+                        </span>
+                        <span className="text-base leading-none">{f.emoji}</span>
+                      </div>
+                      <div className="flex-1 space-y-0.5">
+                        <p className="text-[10px] text-[#4a3728] leading-relaxed font-bold">
+                          {f.desc}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               {/* Fortune History Section */}
               <div className="space-y-2 mt-4 pt-4 border-t border-[#faf5eb]">
@@ -2045,6 +2099,17 @@ export default function App() {
           <Info className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
           <span>画像をタップするとヒロをなでなですることができます！🐾</span>
         </footer>
+
+        {/* 全データをリセットして初期状態に戻すボタン */}
+        <div className="flex justify-center pt-1">
+          <button
+            onClick={resetAllData}
+            className="px-4 py-2 text-[10px] md:text-xs font-bold text-neutral-400 hover:text-red-500 hover:bg-red-50 border border-dashed border-neutral-300 hover:border-red-200 transition-all cursor-pointer flex items-center gap-1 bg-white/40 shadow-3xs"
+          >
+            <span>🧹</span>
+            <span>アプリを完全に初期状態に戻す（データクリア）</span>
+          </button>
+        </div>
 
       </div>
 

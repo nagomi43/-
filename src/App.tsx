@@ -524,6 +524,7 @@ export default function App() {
   // 衣装をお着替えする処理
   const equipCostume = (id: string) => {
     setEquippedCostume(id);
+    setShowCloset(false);
     localStorage.setItem("hiro_equipped_costume", id);
 
     const costume = costumeList.find(c => c.id === id);
@@ -959,10 +960,14 @@ export default function App() {
                         const isEquipped = equippedCostume === costume.id;
 
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={costume.id}
+                            aria-label={`衣装「${costume.name}」`}
+                            aria-pressed={isEquipped}
+                            disabled={!isUnlocked}
                             onClick={() => isUnlocked && equipCostume(costume.id)}
-                            className={`p-2 rounded-xl border text-center flex flex-col items-center justify-between relative cursor-pointer select-none transition-all ${
+                            className={`appearance-none w-full p-2 rounded-xl border text-center flex flex-col items-center justify-between relative cursor-pointer select-none transition-all ${
                               isEquipped
                                 ? "bg-amber-100/50 border-amber-400 shadow-xs scale-102"
                                 : isUnlocked
@@ -1003,7 +1008,7 @@ export default function App() {
                                 </p>
                               )}
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>

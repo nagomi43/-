@@ -1,0 +1,6 @@
+{
+  "name": "ヒロの名言ガチャ",
+  "description": "今のあなたの気分に合わせて、柴犬のヒロが心に寄り添う言葉を届けてくれる名言ガチャアプリです。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

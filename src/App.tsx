@@ -492,6 +492,7 @@ export default function App() {
   // 衣装をお着替えする処理
   const equipCostume = (id: string) => {
     setEquippedCostume(id);
+    setShowCloset(false);
     localStorage.setItem("hiro_equipped_costume", id);
 
     const costume = costumeList.find(c => c.id === id);
@@ -873,6 +874,22 @@ export default function App() {
     return equipped ? equipped.image : hiroDefaultImg;
   };
 
+  const currentCostume = costumeList.find(c => c.id === equippedCostume) || costumeList[0];
+  const unlockedCostumeCount = costumeList.filter(
+    costume => getBondInfo(petCount).level >= costume.requiredLevel,
+  ).length;
+
+  const returnToHiro = () => {
+    setCurrentQuote(null);
+    setIsDrawing(false);
+    setSelectedMood(null);
+    setShowCloset(false);
+    setActiveTab("fortune");
+    setShuffleText("「下のボタンから、今の気分を教えてくださいね」");
+    setDialogue(defaultDialogues[0]);
+    document.getElementById("hiro-home")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-between px-4 py-8 md:py-12 bg-[#faf7f2] relative overflow-hidden text-[#4a3728]">
       
@@ -898,12 +915,53 @@ export default function App() {
           </p>
         </header>
 
+        {/* Quick navigation keeps the home screen easy to scan */}
+        <nav aria-label="ホームメニュー" className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button
+            type="button"
+            onClick={() => document.getElementById("gacha-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50/80 px-2 py-2 text-[11px] font-black text-orange-700 transition hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+          >
+            <span>🎲</span><span>名言ガチャ</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowCloset(true);
+              document.getElementById("costume-section")?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50/80 px-2 py-2 text-[11px] font-black text-amber-800 transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+          >
+            <span>👕</span><span>きせかえ</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("fortune");
+              document.getElementById("library-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50/80 px-2 py-2 text-[11px] font-black text-violet-700 transition hover:bg-violet-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
+          >
+            <span>🔮</span><span>今日の運勢</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("favorites");
+              document.getElementById("library-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/80 px-2 py-2 text-[11px] font-black text-rose-700 transition hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
+          >
+            <span>📚</span><span>コレクション</span>
+          </button>
+        </nav>
+
         {/* Main Gacha Card Container */}
-        <main className="space-y-6">
+        <main id="hiro-home" className="space-y-6 scroll-mt-6">
           <div className="relative bg-white rounded-3xl border-3 border-[#f0ebe4] p-5 md:p-8 shadow-xl shadow-[#4a3728]/5 overflow-hidden">
             
             {/* "Hiro's Bond" Progress Gauge Bar */}
-            <div className="mb-5 mt-1 bg-[#fdfbf7] border-2 border-[#e6dec9]/60 rounded-2xl p-4 space-y-2 relative shadow-xs">
+            <div id="costume-section" className="mb-5 mt-1 bg-[#fdfbf7] border-2 border-[#e6dec9]/60 rounded-2xl p-4 space-y-2 relative shadow-xs scroll-mt-6">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#7c6a59] flex items-center gap-1">
                   <span>🐕</span>
@@ -911,8 +969,11 @@ export default function App() {
                 </span>
                 <div className="flex items-center gap-1.5">
                   <button
+                    type="button"
+                    aria-expanded={showCloset}
+                    aria-controls="hiro-costume-closet"
                     onClick={() => setShowCloset(!showCloset)}
-                    className={`text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full border shadow-2xs transition-all flex items-center gap-1 cursor-pointer ${
+                    className={`text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border shadow-2xs transition-all flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${
                       showCloset
                         ? "bg-amber-600 text-white border-amber-600"
                         : "bg-amber-50 hover:bg-amber-100/70 text-amber-800 border-amber-200"
@@ -956,48 +1017,64 @@ export default function App() {
               <AnimatePresence>
                 {showCloset && (
                   <motion.div
+                    id="hiro-costume-closet"
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.25, ease: "easeInOut" }}
                     className="overflow-hidden border-t border-[#e6dec9]/60 pt-3 mt-3 space-y-3"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black text-amber-800 flex items-center gap-1">
-                        <span>🚪</span>
-                        <span>ヒロの衣装クローゼット</span>
-                      </span>
-                      <span className="text-[9px] text-[#a39485] font-medium">
-                        ※絆レベルアップで新しい服が解放されるワン！
-                      </span>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-black text-amber-800 flex items-center gap-1">
+                          <span>🚪</span>
+                          <span>ヒロの衣装クローゼット</span>
+                        </span>
+                        <span className="text-[9px] text-[#a39485] font-medium text-right">
+                          ※絆レベルアップで新しい服が解放されるワン！
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2 text-[10px] font-bold text-[#7c6a59]">
+                        <span>現在の衣装：<strong className="text-amber-800">{currentCostume?.name}</strong></span>
+                        <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-amber-700 shadow-2xs">{unlockedCostumeCount}/{costumeList.length} 解放</span>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-2 gap-2.5">
                       {costumeList.map((costume) => {
                         const isUnlocked = getBondInfo(petCount).level >= costume.requiredLevel;
                         const isEquipped = equippedCostume === costume.id;
 
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={costume.id}
+                            aria-label={`衣装「${costume.name}」`}
+                            aria-pressed={isEquipped}
+                            disabled={!isUnlocked}
+                            title={isUnlocked ? `${costume.name}に着替える` : `絆レベル${costume.requiredLevel}で解放`}
                             onClick={() => isUnlocked && equipCostume(costume.id)}
-                            className={`p-2 rounded-xl border text-center flex flex-col items-center justify-between relative cursor-pointer select-none transition-all ${
+                            className={`appearance-none w-full min-h-[150px] p-2.5 rounded-xl border text-center flex flex-col items-center justify-between relative cursor-pointer select-none transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${
                               isEquipped
-                                ? "bg-amber-100/50 border-amber-400 shadow-xs scale-102"
+                                ? "bg-amber-100/50 border-amber-400 ring-2 ring-amber-200 shadow-xs"
                                 : isUnlocked
                                 ? "bg-white hover:bg-[#faf8f5] border-[#ede7dc] hover:border-amber-300"
-                                : "bg-neutral-50/70 border-neutral-200 opacity-60 cursor-not-allowed"
+                                : "bg-neutral-50/70 border-neutral-200 cursor-not-allowed"
                             }`}
                           >
-                            <div className="w-12 h-12 rounded-lg overflow-hidden bg-amber-50/50 border border-[#f5efdf] flex items-center justify-center relative">
-                              {isUnlocked ? (
-                                <img
-                                  src={costume.image}
-                                  alt={costume.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="text-xl text-neutral-400">🔒</div>
+                            <div className="w-16 h-16 rounded-xl overflow-hidden bg-amber-50/50 border border-[#f5efdf] flex items-center justify-center relative">
+                              <img
+                                src={costume.image}
+                                alt={costume.name}
+                                className={`w-full h-full object-cover transition-all ${
+                                  isUnlocked ? "" : "opacity-95"
+                                }`}
+                              />
+
+                              {!isUnlocked && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                                  <span className="rounded-full bg-white/90 px-1.5 py-1 text-sm leading-none shadow-sm" aria-hidden="true">🔒</span>
+                                </div>
                               )}
                               
                               {isEquipped && (
@@ -1008,21 +1085,21 @@ export default function App() {
                             </div>
 
                             <div className="mt-1 space-y-0.5">
-                              <p className="text-[10px] font-extrabold text-[#3b2a1e] leading-tight truncate max-w-[70px]">
+                              <p className="text-[11px] font-extrabold text-[#3b2a1e] leading-tight truncate max-w-[110px]">
                                 {costume.name}
                               </p>
                               {isUnlocked ? (
-                                <p className="text-[8px] font-black text-amber-700">
+                                <p className="text-[9px] font-black text-amber-700">
                                   {isEquipped ? "着用中" : "着替える"}
                                 </p>
                               ) : (
-                                <p className="text-[8px] font-bold text-[#a39485] flex items-center justify-center gap-0.5">
+                                <p className="text-[9px] font-bold text-[#a39485] flex items-center justify-center gap-0.5">
                                   <span>🔒</span>
-                                  <span>Lv.{costume.requiredLevel}</span>
+                                  <span>Lv.{costume.requiredLevel}で解放</span>
                                 </p>
                               )}
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -1483,6 +1560,15 @@ export default function App() {
                       )}
                       <span>{isSavingQuoteCard ? "名言カード画像を生成中ワン..." : "この名言をカード画像で保存するワン！📸"}</span>
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={returnToHiro}
+                      className="w-full py-2.5 rounded-xl border-2 border-[#e6dec9] bg-white text-[#7c6a59] hover:bg-amber-50 hover:border-amber-300 transition-all text-xs md:text-sm font-black flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <span>🐕</span>
+                      <span>ヒロの画面に戻る</span>
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -1507,7 +1593,7 @@ export default function App() {
           </div>
 
           {/* Mood Gacha Buttons Section */}
-          <div className="space-y-3">
+          <div id="gacha-section" className="space-y-3 scroll-mt-6">
             <h2 className="text-center text-xs font-bold uppercase tracking-wider text-[#7c6a59] flex items-center justify-center gap-1">
               <Compass className="w-3.5 h-3.5" />
               <span>今のあなたの気分は？（いずれかを選んでガチャ！）</span>
@@ -1588,7 +1674,7 @@ export default function App() {
         </main>
 
         {/* History & Favorites Interactive Section */}
-        <section className="bg-white rounded-2xl border-2 border-[#f0ebe4] p-4 shadow-sm space-y-4">
+        <section id="library-section" className="bg-white rounded-2xl border-2 border-[#f0ebe4] p-4 shadow-sm space-y-4 scroll-mt-6">
           
           {/* Tab Selector */}
           <div className="flex border-b border-[#faf5eb] pb-2 overflow-x-auto whitespace-nowrap scrollbar-none gap-2">
